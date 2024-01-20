@@ -7,9 +7,9 @@ const menuPos = {
 
 let menuVisible = false;
 
-const menuFour = {
+const MENU = {
     type: "four",
-    choice: [
+    choices: [
         {
             name: "a",
         },
@@ -17,7 +17,7 @@ const menuFour = {
             name: "two",
             sub: {
                 type: "two",
-                choice: [
+                choices: [
                     {
                         name: "1",
                     },
@@ -34,7 +34,7 @@ const menuFour = {
             name: "four",
             sub: {
                 type: "four",
-                choice: [
+                choices: [
                     {
                         name: "e",
                     },
@@ -53,8 +53,7 @@ const menuFour = {
     ]
 };
 
-let menu = menuFour;
-let nbChoice = menu.choice.length;
+let menu = MENU;
 
 let choice;
 
@@ -81,22 +80,18 @@ const generateMenu = function (menu) {
     const choicesDiv = menuDiv.querySelector('.choices');
     choicesDiv.innerHTML = '';
 
-    menu.choice.forEach(function (choice, index) {
+    menu.choices.forEach(function (choice) {
         const choiceDiv = document.createElement('div');
-        if (nbChoice == 2) {
-            choiceDiv.classList.add('half');
-        }
-        if (nbChoice == 4) {
-            choiceDiv.classList.add('quarter');
-        }
+
+        if (menu.type == "two") choiceDiv.classList.add('half');
+        else if (menu.type == "four") choiceDiv.classList.add('quarter');
+
         choiceDiv.classList.add('choice');
         choiceDiv.innerHTML = choice.name;
-        if (choice.sub) {
-            choiceDiv.classList.toggle('sub', true);
-        }
-        else {
-            choiceDiv.classList.toggle('sub', false);
-        }
+
+        if (choice.sub) choiceDiv.classList.toggle('sub', true);
+        else choiceDiv.classList.toggle('sub', false);
+
         choicesDiv.appendChild(choiceDiv);
     });
 };
@@ -104,9 +99,8 @@ const generateMenu = function (menu) {
 document.addEventListener('click', function (event) {
     if (!menuVisible) return;
 
-    if (choice == null && menu != menuFour) {
-        menu = menuFour;
-        nbChoice = menu.choice.length;
+    if (choice == null && menu != MENU) {
+        menu = MENU;
         generateMenu(menu);
         exit.classList.toggle('visible', true);
         back.classList.toggle('visible', false);
@@ -121,18 +115,16 @@ document.addEventListener('click', function (event) {
         return;
     }
 
-    if (menu.choice[choice].sub) {
-        menu = menu.choice[choice].sub;
-        nbChoice = menu.choice.length;
+    if (menu.choices[choice].sub) {
+        menu = menu.choices[choice].sub;
         generateMenu(menu);
         exit.classList.toggle('visible', false);
         back.classList.toggle('visible', true);
         return;
     }
 
-    document.getElementById('result').innerHTML = menu.choice[choice] ? menu.choice[choice].name : 'none';
-    menu = menuFour;
-    nbChoice = menu.choice.length;
+    document.getElementById('result').innerHTML = menu.choices[choice] ? menu.choices[choice].name : 'none';
+    menu = MENU;
     exit.classList.toggle('visible', true);
     back.classList.toggle('visible', false);
     menuDiv.classList.toggle('visible', false);
@@ -140,7 +132,6 @@ document.addEventListener('click', function (event) {
 });
 
 document.addEventListener('mousemove', function (event) {
-
     if (!menuVisible) return;
 
     const mousePos = {
@@ -156,7 +147,7 @@ document.addEventListener('mousemove', function (event) {
     const angle = Math.atan2(choicePos.y, choicePos.x);
     const angle_degre = ((angle * (180.0 / Math.PI)) % 360 + 540) % 360;
 
-    choice = Math.floor(angle_degre / (360 / nbChoice));
+    choice = Math.floor(angle_degre / (360 / menu.choices.length));
 
     const length = Math.sqrt(choicePos.x * choicePos.x + choicePos.y * choicePos.y);
 
@@ -172,7 +163,4 @@ document.addEventListener('mousemove', function (event) {
     else {
         choice = null;
     }
-
-    console.log(choice);
-    console.log(length);
 });
