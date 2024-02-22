@@ -1,3 +1,5 @@
+import { MENU } from './menu-editor.js';
+
 const menuDiv = document.getElementById('menu');
 
 const menuPos = {
@@ -7,70 +9,6 @@ const menuPos = {
 
 let menuVisible = false;
 
-const MENU = {
-    type: "four",
-    choices: [
-        {
-            name: "a",
-        },
-        {
-            name: "two",
-            sub: {
-                type: "two",
-                choices: [
-                    {
-                        name: "1",
-                    },
-                    {
-                        name: "2",
-                    },
-                ]
-            }
-        },
-        {
-            name: "sub",
-            sub: {
-                type: "four",
-                isSub: true,
-                choices: [
-                    {
-                        name: "i",
-                    },
-                    {
-                        name: "j",
-                    },
-                    {
-                        name: "k",
-                    },
-                    {
-                        name: "l",
-                    },
-                ]
-            }
-        },
-        {
-            name: "four",
-            sub: {
-                type: "four",
-                choices: [
-                    {
-                        name: "e",
-                    },
-                    {
-                        name: "f",
-                    },
-                    {
-                        name: "g",
-                    },
-                    {
-                        name: "h",
-                    },
-                ]
-            }
-        },
-    ]
-};
-
 let menu = [MENU];
 
 let choice;
@@ -78,6 +16,10 @@ let choice;
 const exit = document.getElementById('exit');
 exit.classList.toggle('visible', true);
 const back = document.getElementById('back');
+
+const choicesDiv = menuDiv.querySelector('.choices');
+const subChoicesDiv = menuDiv.querySelector('.subchoices');
+const circular = menuDiv.querySelector('.circular');
 
 document.addEventListener('contextmenu', function (event) {
     event.preventDefault();
@@ -95,49 +37,41 @@ document.addEventListener('contextmenu', function (event) {
 });
 
 const generateMenu = function (menu) {
-    const choicesDiv = menuDiv.querySelector('.choices');
-    const subChoicesDiv = menuDiv.querySelector('.subchoices');
     choicesDiv.innerHTML = '';
     subChoicesDiv.innerHTML = '';
 
     let currentMenu = menu[menu.length - 1];
 
-    if (menu[menu.length - 1]?.isSub) {
-        subChoicesDiv.classList.toggle('hidden', false);
-
-        menu[menu.length - 1].choices.forEach(function (choice) {
-            const subChoiceDiv = document.createElement('div');
-            subChoiceDiv.classList.add('subchoice');
-            subChoiceDiv.innerHTML = `<p>${choice.name}</p>`;
-            subChoicesDiv.appendChild(subChoiceDiv);
-        });
-
+    if (currentMenu?.isSub) {
+        generateSubMenu(currentMenu);
         currentMenu = menu[menu.length - 2];
     }
     else {
         subChoicesDiv.classList.toggle('hidden', true);
     }
-
     if (currentMenu.type == "two") {
-        choicesDiv.classList.toggle('two', true);
+        generateMenuTwo(currentMenu);
+    }
+    if (currentMenu.type == "four") {
+        generateMenuFour(currentMenu);
+    }
+    if (currentMenu.type == "circular") {
+        generateMenuFour(menu[menu.length - 2]);
+        generateMenuCircular(currentMenu);
     }
     else {
-        choicesDiv.classList.toggle('two', false);
+        circular.classList.toggle('hidden', true);
     }
+};
 
-    currentMenu.choices.forEach(function (choice) {
+const generateMenuTwo = function (menu) {
+    choicesDiv.classList.toggle('two', true);
+
+    menu.choices.forEach(function (choice) {
         const choiceDiv = document.createElement('div');
-
-        if (currentMenu.type == "two") {
-            choiceDiv.classList.toggle('half', true);
-        }
-
-        else if (currentMenu.type == "four") {
-            choiceDiv.classList.toggle('quarter', true);
-        }
-
+        choiceDiv.classList.toggle('half', true);
         choiceDiv.classList.add('choice');
-        choiceDiv.innerHTML = choice.name;
+        choiceDiv.innerHTML = `<p>${choice.name}</p>`;
 
         if (choice.sub) choiceDiv.classList.toggle('sub', true);
         else choiceDiv.classList.toggle('sub', false);
@@ -146,8 +80,71 @@ const generateMenu = function (menu) {
     });
 };
 
+const generateMenuFour = function (menu) {
+    choicesDiv.classList.toggle('two', false);
+
+    menu.choices.forEach(function (choice) {
+        const choiceDiv = document.createElement('div');
+        choiceDiv.classList.toggle('quarter', true);
+        choiceDiv.classList.add('choice');
+        choiceDiv.innerHTML = `<p>${choice.name}</p>`;
+
+        if (choice.sub) choiceDiv.classList.toggle('sub', true);
+        else choiceDiv.classList.toggle('sub', false);
+
+        choicesDiv.appendChild(choiceDiv);
+    });
+};
+
+const generateSubMenu = function (menu) {
+    subChoicesDiv.classList.toggle('hidden', false);
+
+    menu.choices.forEach(function (choice) {
+        const subChoiceDiv = document.createElement('div');
+        subChoiceDiv.classList.add('subchoice');
+        subChoiceDiv.innerHTML = `<p>${choice.name}</p>`;
+        subChoicesDiv.appendChild(subChoiceDiv);
+    });
+};
+
+const generateMenuCircular = function (menu) {
+    circular.classList.toggle('hidden', false);
+    updateCircular(0);
+};
+
+const updateCircular = function (angle) {
+    const context = circular.getContext('2d');
+
+    const rayon = 100;
+    const xCentre = circular.width / 2;
+    const yCentre = circular.height / 2;
+
+    context.clearRect(0, 0, circular.width, circular.height);
+    context.beginPath();
+    context.moveTo(xCentre, yCentre); // se déplacer vers le centre du cercle
+    context.arc(xCentre, yCentre, rayon, 0, angle);
+    context.closePath();
+    context.fillStyle = '#ff0000'; // Couleur du camembert
+    context.fill();
+}
+
 document.addEventListener('click', function (event) {
     if (!menuVisible) return;
+
+    if (menu[menu.length - 1].type == "circular") {
+
+        const choicePos = {
+            x: event.clientX - menuPos.x,
+            y: event.clientY - menuPos.y
+        };
+
+        const angle = Math.atan2(choicePos.y, choicePos.x);
+        let angle_degre = (angle * (180.0 / Math.PI)) % 360;
+        if (angle_degre < 0) angle_degre += 360;
+        document.getElementById('result').innerHTML = Math.floor((angle_degre / 360) * 100) + "%";
+
+        choice = null;
+    }
 
     if (choice == null && menu.length > 1) {
         menu.pop();
@@ -199,6 +196,11 @@ document.addEventListener('mousemove', function (event) {
     const angle = Math.atan2(choicePos.y, choicePos.x);
     const angle_degre = ((angle * (180.0 / Math.PI)) % 360 + 540) % 360;
 
+    if (menu[menu.length - 1].type == "circular") {
+        updateCircular(angle);
+        return;
+    }
+
     choice = Math.floor(angle_degre / (360 / menu[menu.length - 1].choices.length));
 
     const length = Math.sqrt(choicePos.x * choicePos.x + choicePos.y * choicePos.y);
@@ -232,3 +234,21 @@ document.addEventListener('mousemove', function (event) {
         }
     }
 });
+
+// document.addEventListener('select', (e) => {
+// const selection = window.getSelection();
+// const parentElement = selection.baseNode.parentElement;
+
+
+// if (parentElement) {
+//     const range = selection.getRangeAt(0);
+//     const selectedText = range.cloneContents();
+//     const span = document.createElement('span');
+//     span.classList.add('selected-text');
+//     span.appendChild(selectedText);
+
+//     // Remplace la sélection par le span
+//     range.deleteContents();
+//     range.insertNode(span);
+// }
+// })
