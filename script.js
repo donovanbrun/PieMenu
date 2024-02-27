@@ -22,6 +22,8 @@ const choicesDiv = menuDiv.querySelector('.choices');
 const subChoicesDiv = menuDiv.querySelector('.subchoices');
 const circular = menuDiv.querySelector('.circular');
 
+const text = document.getElementById('text');
+
 const openMenu = function (event) {
     event.preventDefault();
 
@@ -122,10 +124,10 @@ const updateCircular = function (angle) {
 
     context.clearRect(0, 0, circular.width, circular.height);
     context.beginPath();
-    context.moveTo(xCentre, yCentre); // se déplacer vers le centre du cercle
+    context.moveTo(xCentre, yCentre);
     context.arc(xCentre, yCentre, rayon, 0, angle);
     context.closePath();
-    context.fillStyle = '#ff0000'; // Couleur du camembert
+    context.fillStyle = '#ff0000';
     context.fill();
 }
 
@@ -137,8 +139,9 @@ const handleClick = function (event) {
     if (menu[menu.length - 1].type == "circular") {
         let angle_degre = (angle * (180.0 / Math.PI)) % 360;
         if (angle_degre < 0) angle_degre += 360;
-        document.getElementById('result').innerHTML = Math.floor((angle_degre / 360) * 100) + "%";
-
+        let value = Math.floor((angle_degre / 360) * 100);
+        document.getElementById('result').innerHTML = value + "%";
+        menu[menu.length - 1].action(text, value);
         choice = null;
     }
 
@@ -168,7 +171,10 @@ const handleClick = function (event) {
         return;
     }
 
-    document.getElementById('result').innerHTML = menu[menu.length - 1].choices[choice] ? menu[menu.length - 1].choices[choice].name : 'none';
+    menu[menu.length - 1].choices[choice]?.action(text);
+
+    const res = Array.from(menu).map(m => m.name).join(" -> ") + " -> " + menu[menu.length - 1].choices[choice].name;
+    document.getElementById('result').innerHTML = res;
     menu = [MENU];
     exit.classList.toggle('visible', true);
     back.classList.toggle('visible', false);
