@@ -12,6 +12,7 @@ let menuVisible = false;
 let menu = [MENU];
 
 let choice;
+let angle = 0;
 
 const exit = document.getElementById('exit');
 exit.classList.toggle('visible', true);
@@ -21,7 +22,7 @@ const choicesDiv = menuDiv.querySelector('.choices');
 const subChoicesDiv = menuDiv.querySelector('.subchoices');
 const circular = menuDiv.querySelector('.circular');
 
-document.addEventListener('contextmenu', function (event) {
+const openMenu = function (event) {
     event.preventDefault();
 
     menuDiv.classList.toggle('visible', true);
@@ -34,7 +35,7 @@ document.addEventListener('contextmenu', function (event) {
     menuDiv.style.top = menuPos.y - (menuDiv.clientHeight / 2) + 'px';
 
     generateMenu(menu);
-});
+};
 
 const generateMenu = function (menu) {
     choicesDiv.innerHTML = '';
@@ -128,17 +129,12 @@ const updateCircular = function (angle) {
     context.fill();
 }
 
-document.addEventListener('click', function (event) {
+const handleClick = function (event) {
+    event.stopPropagation();
+    event.stopImmediatePropagation();
     if (!menuVisible) return;
 
     if (menu[menu.length - 1].type == "circular") {
-
-        const choicePos = {
-            x: event.clientX - menuPos.x,
-            y: event.clientY - menuPos.y
-        };
-
-        const angle = Math.atan2(choicePos.y, choicePos.x);
         let angle_degre = (angle * (180.0 / Math.PI)) % 360;
         if (angle_degre < 0) angle_degre += 360;
         document.getElementById('result').innerHTML = Math.floor((angle_degre / 360) * 100) + "%";
@@ -178,9 +174,9 @@ document.addEventListener('click', function (event) {
     back.classList.toggle('visible', false);
     menuDiv.classList.toggle('visible', false);
     menuVisible = false;
-});
+};
 
-document.addEventListener('mousemove', function (event) {
+const handleChoice = function (event) {
     if (!menuVisible) return;
 
     const mousePos = {
@@ -193,15 +189,15 @@ document.addEventListener('mousemove', function (event) {
         y: mousePos.y - menuPos.y
     };
 
-    const angle = Math.atan2(choicePos.y, choicePos.x);
-    const angle_degre = ((angle * (180.0 / Math.PI)) % 360 + 540) % 360;
+    angle = Math.atan2(choicePos.y, choicePos.x);
+    const angle_degrees = ((angle * (180.0 / Math.PI)) % 360 + 540) % 360;
 
     if (menu[menu.length - 1].type == "circular") {
         updateCircular(angle);
         return;
     }
 
-    choice = Math.floor(angle_degre / (360 / menu[menu.length - 1].choices.length));
+    choice = Math.floor(angle_degrees / (360 / menu[menu.length - 1].choices.length));
 
     const length = Math.sqrt(choicePos.x * choicePos.x + choicePos.y * choicePos.y);
 
@@ -233,22 +229,8 @@ document.addEventListener('mousemove', function (event) {
             choice = null;
         }
     }
-});
+}
 
-// document.addEventListener('select', (e) => {
-// const selection = window.getSelection();
-// const parentElement = selection.baseNode.parentElement;
-
-
-// if (parentElement) {
-//     const range = selection.getRangeAt(0);
-//     const selectedText = range.cloneContents();
-//     const span = document.createElement('span');
-//     span.classList.add('selected-text');
-//     span.appendChild(selectedText);
-
-//     // Remplace la sélection par le span
-//     range.deleteContents();
-//     range.insertNode(span);
-// }
-// })
+document.addEventListener('contextmenu', openMenu);
+document.addEventListener('click', handleClick);
+document.addEventListener('mousemove', handleChoice);
